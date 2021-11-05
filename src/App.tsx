@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+
 import Header from './components/Header';
 import UndoList from './components/List';
-
 import './App.css';
+import { ListItem } from './components/List'
 
-function App() {
-  const [undoList, setUndoList] = useState([]);
+const App: React.FC = () => {
+  const [undoList, setUndoList] = useState<ListItem[]>([]);
 
   useEffect(() => {
     axios
@@ -14,7 +15,7 @@ function App() {
       .then((res) => {
         setUndoList(res.data.data);
       })
-      .catch((e) => {});
+      .catch((e) => console.error(e));
   }, []);
 
   const valueChange = (index: number, value: string) => {
@@ -31,7 +32,7 @@ function App() {
   };
 
   const handleBlur = (index: number) => {
-    const newList = undoList.map((item, listIndex) => {
+    const newList = undoList.map((item, listIndex): ListItem => {
       if (index === listIndex) {
         return {
           ...item,
@@ -44,7 +45,7 @@ function App() {
   };
 
   const changeStatus = (index: number) => {
-    const newList = undoList.map((item, listIndex) => {
+    const newList = undoList.map((item, listIndex): ListItem => {
       if (index === listIndex) {
         return {
           ...item,
@@ -66,7 +67,7 @@ function App() {
         status: 'div',
         value
       }
-    ];
+    ] as ListItem[];
     setUndoList(newList);
   };
 

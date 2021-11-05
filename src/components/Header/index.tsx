@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 
-interface IHeader {
+import './index.css';
+
+interface HeaderProps {
   addUndoItem: (value: string) => void;
 }
 
-const Header: React.FC<IHeader> = (props) => {
+const Header: React.FC<HeaderProps> = (props) => {
   const [value, setValue] = useState('');
   const { addUndoItem } = props;
 

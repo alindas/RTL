@@ -1,19 +1,21 @@
 import React from 'react';
 
-type TListItem = {
+import './index.css';
+
+export type ListItem = {
   status: 'div' | 'input';
   value: string;
 };
 
-export interface IList {
-  list: TListItem[];
+export interface ListProps {
+  list: ListItem[];
   deleteItem: (index: number) => void;
   changeStatus: (index: number) => void;
   handleBlur: (index: number) => void;
   valueChange: (index: number, value: string) => void;
 }
 
-const List: React.FC<IList> = (props) => {
+const List: React.FC<ListProps> = (props) => {
   const { list, changeStatus, handleBlur, valueChange, deleteItem } = props;
 
   const liNodes = list.map((item, index) => (
