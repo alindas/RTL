@@ -4,14 +4,15 @@ import axios from 'axios';
 import Header from './components/Header';
 import UndoList from './components/List';
 import './App.css';
-import { ListItem } from './components/List'
+import { TListItem } from './components/List'
 
 const App: React.FC = () => {
-  const [undoList, setUndoList] = useState<ListItem[]>([]);
+  const [undoList, setUndoList] = useState<TListItem[]>([]);
+  const [backup, setBackup] = useState('');
 
   useEffect(() => {
     axios
-      .get('/undoList.json')
+      .get('/mock/undoList.json')
       .then((res) => {
         setUndoList(res.data.data);
       })
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   }, []);
 
   const valueChange = (index: number, value: string) => {
+    !backup && setBackup(undoList[index].value);
     const newList = undoList.map((item, listIndex) => {
       if (index === listIndex) {
         return {
@@ -31,43 +33,39 @@ const App: React.FC = () => {
     setUndoList(newList);
   };
 
-  const handleBlur = (index: number) => {
-    const newList = undoList.map((item, listIndex): ListItem => {
+  const handleFinish = (index: number, e: React.FocusEvent | React.KeyboardEvent) => {
+    if(e.type === 'keyup' && (e as React.KeyboardEvent).keyCode !== 13) return;
+    if((e as React.KeyboardEvent).keyCode === 13) {
+      if(!undoList[index].value) {
+        const newList = undoList.filter((_, listIndex) => listIndex !== index);
+        setUndoList(newList);
+      }
+      backup && setBackup('');
+      Promise.resolve()
+      .then(() => (e.target as any).blur());
+      return;
+    }
+    if(!backup) return;
+    const newList = undoList.map((item, listIndex) => {
       if (index === listIndex) {
         return {
           ...item,
-          status: 'div'
+          value: backup
         };
       }
       return item;
     });
     setUndoList(newList);
-  };
-
-  const changeStatus = (index: number) => {
-    const newList = undoList.map((item, listIndex): ListItem => {
-      if (index === listIndex) {
-        return {
-          ...item,
-          status: 'input'
-        };
-      }
-      return {
-        ...item,
-        status: 'div'
-      };
-    });
-    setUndoList(newList);
-  };
+    setBackup('');
+  }
 
   const addUndoItem = (value: string) => {
     const newList = [
       ...undoList,
       {
-        status: 'div',
         value
       }
-    ] as ListItem[];
+    ] as TListItem[];
     setUndoList(newList);
   };
 
@@ -83,9 +81,8 @@ const App: React.FC = () => {
       <UndoList
         list={undoList}
         deleteItem={deleteItem}
-        changeStatus={changeStatus}
-        handleBlur={handleBlur}
         valueChange={valueChange}
+        handleFinish={handleFinish}
       />
     </div>
   );

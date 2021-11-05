@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 
 import './index.css';
 
-interface HeaderProps {
+interface IHeaderProps {
   addUndoItem: (value: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = (props) => {
+const Header: React.FC<IHeaderProps> = (props) => {
   const [value, setValue] = useState('');
   const { addUndoItem } = props;
 
@@ -24,7 +24,6 @@ const Header: React.FC<HeaderProps> = (props) => {
           <input
             placeholder="Add Todo"
             className="header-input"
-            data-testid="header-input"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyUp={handleInputKeyUp}

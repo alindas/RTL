@@ -2,42 +2,35 @@ import React from 'react';
 
 import './index.css';
 
-export type ListItem = {
-  status: 'div' | 'input';
+export type TListItem = {
   value: string;
 };
 
-export interface ListProps {
-  list: ListItem[];
+export interface IListProps {
+  list: TListItem[];
   deleteItem: (index: number) => void;
-  changeStatus: (index: number) => void;
-  handleBlur: (index: number) => void;
   valueChange: (index: number, value: string) => void;
+  handleFinish: (index: number, e: React.FocusEvent | React.KeyboardEvent) => void;
 }
 
-const List: React.FC<ListProps> = (props) => {
-  const { list, changeStatus, handleBlur, valueChange, deleteItem } = props;
+const List: React.FC<IListProps> = (props) => {
+  const { list, valueChange, deleteItem, handleFinish } = props;
 
   const liNodes = list.map((item, index) => (
     <li
       className="undo-list-item"
-      data-testid="list-item"
       key={index}
-      onClick={() => changeStatus(index)}
+      // onClick={() => changeStatus(index)}
     >
-      {item.status === 'div'
-      ? item.value
-      : <input
+      <input
         className="undo-list-input"
-        data-testid="input"
         value={item.value}
-        onBlur={() => handleBlur(index)}
-        onChange={(e) => valueChange(index, e.target.value)}
+        onChange={e => valueChange(index, e.target.value)}
+        onBlur={e => handleFinish(index, e)}
+        onKeyUp={e => handleFinish(index, e)}
       />
-      }
       <div
         className="undo-list-delete"
-        data-testid="delete-item"
         onClick={(e) => {
           e.stopPropagation();
           deleteItem(index);
@@ -52,7 +45,7 @@ const List: React.FC<ListProps> = (props) => {
     <div className="undo-list">
       <div className="undo-list-title">
         正在进行
-        <div data-testid="count" className="undo-list-count">
+        <div className="undo-list-count">
           {list.length}
         </div>
       </div>
