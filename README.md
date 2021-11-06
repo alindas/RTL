@@ -50,7 +50,7 @@
 
   + 小型测试代码覆盖率应该不小于40%。
 
-    
+
 
 ### 测试工具的选择
 
@@ -125,25 +125,25 @@ Testing Library 鼓励测试避免 **实现细节**（比如组件的内部状�
 
 + 常规的
 
-1. + getByRole
+  + getByRole 查找具有`特定角色`的元素
 
-2. + getByLabelText
+  + getByLabelText 查找具有给定文本匹配的 `label` 元素
 
-1. + getByPlaceholderText
+  + getByPlaceholderText 查找具有`占位符属性`的元素
 
-2. + getByText
+  + getByText 查找具有`文本节点`的元素
 
-1. + getByDisplayValue
+  + getByDisplayValue 查找具有 `value` 的控件元素
 
 + 语义查询
 
-1. + getByAltText
+  + getByAltText 查找具有 `alt` 属性，alt 对应的 text 文本匹配的元素
 
-2. + getByTitle
+  + getByTitle 返回具有 `title` 属性，title 对应的 text 文本匹配的元素
 
 + 借助测试 Id
 
-1. + getByTestId（考虑在生产环境中避免无意义的属性，可以借助 `babel-plugin-react-remove-properties `去除 `data-test` 测试辅助选择器）
+  + getByTestId（考虑在生产环境中避免无意义的属性，可以借助 `babel-plugin-react-remove-properties `去除 `data-test` 测试辅助选择器）
 
      ```properties
      // .bablerc
@@ -175,7 +175,7 @@ import { render, logRoles } from '@testing-library/react';
 
 test('find ARIA role', () => {
 	const { container } = render(<Component />);
-	logRoles(container);    
+	logRoles(container);
 })
 ```
 
@@ -193,9 +193,11 @@ test('find ARIA role', () => {
 
 借助 fireEvent 可以模拟实际用户产生的交互事件。
 
-> Testing Library 下还有一个高级库`@testing-library/user-event` ，其提供了比 fireEvent 更多的交互事件。
->
-> [高级交互接口](https://testing-library.com/docs/ecosystem-user-event/)
+> Testing Library 下还有一个高级库[`@testing-library/user-event`](https://testing-library.com/docs/ecosystem-user-event/) ，其提供了比 fireEvent 更多的交互事件。
+
+```
+fireEvent(node: HTMLElement, event: Event)
+```
 
 [`fireEvent` 对应的 `eventMap` 事件集属性](https://github.com/testing-library/dom-testing-library/blob/main/src/event-map.js)
 
@@ -245,6 +247,7 @@ toHaveDescription
 #### 判断真假
 
 1. toBeNull
+
 2. toBeUndefined
 
 3. toBeDefined
@@ -256,6 +259,7 @@ toHaveDescription
 #### 数字相关
 
 1. toBeGeaterThan 大于某个数
+
 2. toBeGeaterThanOrEqual 大于或等于
 
 3. toBeLessThan 小于某数
@@ -275,6 +279,7 @@ toHaveDescription
 #### 数组，集合相关
 
 1. toContain 判断数组或集合是否包含某个元素
+
 2. toHaveLength 判断数组的长度
 
 #### 函数相关
@@ -343,6 +348,7 @@ describe('7', () => {
 Jest 提供的**钩子函数**有：
 
 1. beforeEach
+
 2. beforeAll
 
 3. afterEach
@@ -362,7 +368,7 @@ describe('', () => {
     beforeEach(() => console.log('intside beforeEach'));
     afterAll(() => console.log('intside afterAll'));
     afterEach(() => console.log('intside afterEach'));
-    
+
     test('test1', () => console.log('test1 run'));
     test('test2', () => console.log('test2 run'));
 })
@@ -468,7 +474,7 @@ describe(describe, () => {
 
 ### 项目准备
 
-``` 
+```
 npm i create-react-app -g // 全局安装脚手架
 
 create-react-app React-Testing-Library // 创建项目
@@ -524,7 +530,7 @@ setupFilesAfterEnv: ['<rootDir>/src/tests/setupTests.js']
 
 （具体组件功能结构在此不一一陈列）
 
-### 测试编写
+### 开展测试
 
 #### 需求分析
 
@@ -542,13 +548,13 @@ setupFilesAfterEnv: ['<rootDir>/src/tests/setupTests.js']
 
   + 列表不为空，点击列表项内容可将其修改，回车后保存修改后的内容
 
-    
+
 
 #### 测试编写
 
 在对应组件下添加 `__tests__` 目录，创建格式如 `*.test.[jt]s?(x)` 的测试文件。
 
-```typescript
+```tsx
 // header.test.tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -672,13 +678,35 @@ describe('测试 List 组件', () => {
   })
 })
 
-
-
 ```
 
+> 编写测试时需要注意的是，如果组件的更新动作是交由外部进行处理的，便不能期待进行某些操作后能得到与业务中一样的反馈，应该通过测试回调函数的响应的侧面验证其功能的可行性。
 
+### 其他场景
 
+#### 异步操作
 
+对于测试需要等待的响应事件或 `Promise`，使用 `await` 或 `then` 来进行处理。
+
+```tsx
+// 场景一
+// 点击按钮后异步更新其 textContent 文本，可以借助 findBy 异步查询 API 查找需要等待更新的元素
+const button = screen.getByRole('button', {name: 'Click Me'})
+fireEvent.click(button)
+await screen.findByText('Clicked once')
+fireEvent.click(button)
+await screen.findByText('Clicked twice')
+
+// 场景二
+// 需要等待回调函数的结果，使用 waitFor 对断言进行判断
+await waitFor(() => expect(mockAPI).toHaveBeenCalledTimes(1))
+
+// 场景三
+// 需要等待从 DOM 中删除元素
+waitForElementToBeRemoved(document.querySelector('div.getOuttaHere')).then(() =>
+  console.log('Element no longer in DOM'),
+)
+```
 
 
 
