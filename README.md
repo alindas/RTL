@@ -305,6 +305,89 @@ const test_click = jest.fn();
 expect(test_click).toHaveBeenCalledTimes(1) // 测试是否调用了 1 次
 ```
 
+### 分组和钩子
+
+使用 `describe` 关键字对测试进行包裹。
+
+```js
+describe('分别测试', () => {
+  /** testItem **/
+  /** hook 函数 **/
+}
+```
+
+>需要注意的是，describe 块的运行顺序总是在 test 函数的执行顺序之前。[疑问？](https://stackoverflow.com/questions/56240783/jest-understanding-execution-order-of-a-describe-and-it)
+
+```js
+// describe 块内程序的执行顺序()
+describe('1', () => {
+  console.log('1');
+  describe('2', () => { console.log('2'); });
+  describe('3', () => {
+    console.log('3');
+    describe('4', () => { console.log('4'); })
+    describe('5', () => { console.log('5'); })
+  })
+  describe('6', () => { console.log('6'); })
+})
+describe('7', () => {
+  console.log('7');
+  it('(since there has to be at least one test)', () => { console.log('8') });
+})
+
+// 测试结果，顺序 1-8
+```
+
+可利用 jest 提供的**钩子函数**对单例进行数据准备工作。
+
+Jest 提供的**钩子函数**有：
+
+1. beforeEach
+2. beforeAll
+
+3. afterEach
+
+4. afterAll
+
+需要注意`describe` 外部使用的钩子函数和在内部的钩子函数执行顺序：
+
+```js
+beforeAll(() => console.log('outside beforeAll'));
+beforeEach(() => console.log('outside beforeEach'));
+afterAll(() => console.log('outside afterAll'));
+afterEach(() => console.log('outside afterEach'));
+
+describe('', () => {
+	beforeAll(() => console.log('intside beforeAll'));
+    beforeEach(() => console.log('intside beforeEach'));
+    afterAll(() => console.log('intside afterAll'));
+    afterEach(() => console.log('intside afterEach'));
+    
+    test('test1', () => console.log('test1 run'));
+    test('test2', () => console.log('test2 run'));
+})
+
+/** 结果
+outside beforeAll
+inside beforeAll
+
+outside beforeEach
+inside beforeEach
+test1 run
+inside afterEach
+outside afterEach
+
+outside beforeEach
+inside beforeEach
+test2 run
+inside afterEach
+outside afterEach
+
+inside afterAll
+outside afterAll
+**/
+```
+
 
 
 ### 配置文件
@@ -356,7 +439,9 @@ moduleNameMapper: {
 
 
 
-### 实践
+### 实践与调试
+
+> 当一个测试失败了，应该首先检查单独运行该测试条列是否失败。只需要将 `test` 改为 `test.only` 便可。
 
 ```javascript
 // 编写一条测试项目
@@ -367,9 +452,12 @@ test(describe, () => {
 
 // describe 把多条测试项目包裹起来进行分组
 describe(describe, () => {
-  test1();
-  test2()
+  test('test1', fn);
+  test('test2', fn);
+  test.only('test3', fn); // 再次运行测试，便只会对该单列进行测试
 })
+
+
 ```
 
 
@@ -390,7 +478,7 @@ yarn add @types/react @types/react-dom --dev //  基于 TypeScript
 yarn add axios // 使用 axios 处理异步请求
 ```
 
-使用 `create-react-app` 脚手架创建的项目已经默认使用 Testing Library 作为测试方案，但是脚手架默认将工具的一些配置隐藏起来，如果希望将配置弹出并进行手动配置，则运行 `npm run eject` 。在弹出工程化配置后，只需要关注 `jest` 和 `bable` 两个配置。首先在根目录添加`jest.config.js` 和 `bable.config.js` 这两个文件，然后在 `package.json` 里把对应位置的配置迁移过来。(jest.config.js 按照配置说明重定义，[原因?](https://github.com/facebook/jest/issues/10297))
+使用 `create-react-app` 脚手架创建的项目已经默认使用 Testing Library 作为测试方案，但是脚手架默认将工具的一些配置隐藏起来，如果希望将配置弹出并进行手动配置，则运行 `npm run eject` 。在弹出工程化配置后，只需要关注 `jest` 和 `bable` 两个配置。首先在根目录添加`jest.config.js` 和 `bable.config.js` 这两个文件，然后在 `package.json` 里把对应位置的配置迁移过来。(jest.config.js 按照配置说明重定义，[疑问?](https://github.com/facebook/jest/issues/10297))
 
 ```js
 // jest.config.js
@@ -509,81 +597,82 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import List, { IListProps } from '../index';
 
 const props: IListProps = {
-  list: [],
+  list: [{
+    value: 'list item'
+  }],
   deleteItem: jest.fn(),
   valueChange: jest.fn(),
   handleFinish: jest.fn()
 }
-let contentNode: HTMLElement;
 let Counter: HTMLElement;
-let listItemNode: HTMLElement;
+let listItemNode: HTMLElement[];
 
 beforeEach(() => {
   render(<List {...props}/>);
-  contentNode = screen.getByRole('list');
-  listItemNode = screen.queryByRole('listitem') as HTMLElement;
+  listItemNode = screen.queryAllByRole('listitem') as HTMLElement[];
 });
 
 describe('测试 List 组件', () => {
   it('初始渲染', () => {
+    // 设置空白数据
+    let {
+      deleteItem,
+      valueChange,
+      handleFinish
+    } = props;
+    let blank = {
+      list: [],
+      deleteItem,
+      valueChange,
+      handleFinish
+    }
+    // 此处重新渲染从中取出 container 容器
+    const { container } = render(<List {...blank}/>);
+    const li = container.querySelector('li');
     // 初始渲染时列表项内容为空，计数器值为 0
-    expect(listItemNode).toBeNull();
+    expect(li).toBeNull();
     Counter = screen.getByText(/0/i);
     expect(Counter).toBeInTheDocument();
   })
 
-  props.list = [{
-    "value": "listItem_one"
-  }];
-
   it('删除列表项', () => {
     // 列表项不为空时，右上角计数器存在且值为列表长度
+    expect(listItemNode).toHaveLength(1);
     Counter = screen.getByText(/1/i);
     expect(Counter).toBeInTheDocument();
     // 列表项删除按钮存在，点击将其删除
-    let deleteBtn = listItemNode.querySelector('div') as HTMLElement;
+    let deleteBtn = listItemNode[0].querySelector('div') as HTMLElement;
     expect(deleteBtn).not.toBeNull();
     fireEvent.click(deleteBtn);
     expect(props.deleteItem).toHaveBeenCalledTimes(1);
-    expect(listItemNode).toBeNull();
   })
-
-  props.list = [{
-    "value": "listItem_two"
-  }];
 
   it('编辑列表项', () => {
     // 点击列表项后可将其内容修改
-    fireEvent.click(listItemNode);
-    let editInput = within(listItemNode).getByRole('textbox') as HTMLInputElement;
+    fireEvent.click(listItemNode[0]);
+    let editInput = within(listItemNode[0]).getByRole('textbox') as HTMLInputElement;
     const editValue = {
       target: {
         value: 'edit todo'
       }
     }
+    // 检查修改回调调用次数
     fireEvent.change(editInput, editValue);
-    expect(editInput.value).toEqual('edit todo');
-    // 失去焦点后值还原
-    fireEvent.blur(editInput);
-    expect(editInput.value).toEqual('listItem_two');
-    // 回车后可保存修改后的内容
+    expect(props.valueChange).toHaveBeenCalledTimes(1);
     const keyUp = {
       keyCode: 13
     }
+    // handleFinish 在输入框失去焦点和回车确认时触发事件
     fireEvent.keyUp(editInput, keyUp);
+    // 注意，toHaveBeenCalledTimes 断言是记录历史调用次数，
+    // 所有在这里想要判断 valueChange 不被调用，参数应该为 1 而不是 0
     expect(props.valueChange).toHaveBeenCalledTimes(1);
+    // change 直接修改 input 的 value 值，不触发失焦事件
     expect(props.handleFinish).toHaveBeenCalledTimes(1);
-    expect(editInput.value).toEqual('edit todo');
-    // 将值修改为空并回车则删除列表项
-    fireEvent.change(editInput, {
-      target: {
-        value: ''
-      }
-    });
-    fireEvent.keyUp(editInput, keyUp);
-    expect(editInput).toBeNull();
   })
 })
+
+
 
 ```
 
