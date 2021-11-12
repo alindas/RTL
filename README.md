@@ -399,26 +399,41 @@ outside afterAll
 ### 配置文件
 
 ```properties
-一下列举常用配置项目，所有配置属性访问官网手册 https://jestjs.io/docs/configuration
+// 一下列举常用配置项目，所有配置属性访问官网手册 https://jestjs.io/docs/configuration
 
 // 默认地，Jest 会运行所有的测试用例然后产出所有的错误到控制台中直至结束。
-// bail 配置选项可以让 Jest 在遇到第一个失败后就停止继续运行测试用例
+// bail 配置选项可以让 Jest 在遇到第一个失败后就停止继续运行测试用例，默认值 0
 bail: 1,
-// 指定 Jest 根目录，Jest 只会在根目录下测试用例并运行
-roots: [],
-// 指定测试覆盖率统计范围
+// 每次测试前自动清除模拟调用和实例，相当于每次测试前都调用 jest.clearAllMocks，默认 false
+clearMocks: false,
+// 指示在执行测试时是否应收集覆盖率信息，通过使用覆盖率收集语句改造所有已执行文件，所以开启后可能会显著减慢
+// 测试速度，默认 false
+collectCoverage: false,
+// 指定测试覆盖率统计范围,使用 glob 模式匹配，默认 undefined
 collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}', '!src/**/*.d.ts'],
-// 指定创建测试环境前的准备文件
+// 指定忽略匹配的覆盖范围,默认 ["/node_modules"]
+coveragePathIgnorePatterns: ["/node_modules/"],
+// 配置一组在所有测试环境中可用的全局变量, 默认 {}
+globals: {},
+// 用于给模块路径映射到不同的模块, 默认 null
+moduleNameMapper: {
+  "\\.(css|less|scss|sss|styl)$": "jest-css-modules" | "identity-obj-proxy"
+}
+// 指定 Jest 根目录，Jest 只会在根目录下测试用例并运行
+rootDir: './',
+// 设置 Jest 搜索文件的目录路径列表，默认 []
+roots: [],
+// 指定创建测试环境前的准备文件,针对每个测试文件都会运行一次
 setupFiles: ['react-app-polyfill/jsdom'],
 // 指定测试环境创建完成后为每个测试文件编写的配置文件
 setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
-// 配置 Jest 匹配测试文件的规则的
+// 配置 Jest 匹配测试文件的规则, 使用 glob 规则
 testMatch: [
   '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
   '<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}'
 ],
-// 用于指定测试用例运行环境的
-testEnvironment: 'jest-environment-jsdom-fourteen',
+// 用于指定测试用例运行环境，默认 node
+testEnvironment: 'jsdom',
 // 配置文件处理模块应该忽略的文件
 transformIgnorePatterns: [
   '[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$',
@@ -436,10 +451,9 @@ transformIgnorePatterns: [
   '[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$',
   '^.+\\.module\\.(css|sass|scss)$'
 ],
-// 用于给模块路径映射到不同的模块
-moduleNameMapper: {
-  "\\.(css|less|scss|sss|styl)$": "jest-css-modules" | "identity-obj-proxy"
-}
+// 测试超时时间，默认 5000 毫秒
+testTimeout: 5000
+
 
 ```
 
@@ -447,16 +461,16 @@ moduleNameMapper: {
 
 ### 实践与调试
 
-> 当一个测试失败了，应该首先检查单独运行该测试条列是否失败。只需要将 `test` 改为 `test.only` 便可。
+> 当一个测试失败了，应该首先检查单独运行该测试用例是否失败。只需要将 `test` 改为 `test.only` 便可。
 
 ```javascript
-// 编写一条测试项目
+// 编写一条测试
 test(describe, () => {
     render(<Component />);
     expect();
 })
 
-// describe 把多条测试项目包裹起来进行分组
+// describe 把多条测试包裹起来进行分组
 describe(describe, () => {
   test('test1', fn);
   test('test2', fn);
@@ -474,7 +488,7 @@ describe(describe, () => {
 
 ### 项目准备
 
-```
+```shell
 npm i create-react-app -g // 全局安装脚手架
 
 create-react-app React-Testing-Library // 创建项目
@@ -552,7 +566,7 @@ setupFilesAfterEnv: ['<rootDir>/src/tests/setupTests.js']
 
 #### 测试编写
 
-在对应组件下添加 `__tests__` 目录，创建格式如 `*.test.[jt]s?(x)` 的测试文件。
+在对应组件下添加 `__tests__` 目录，创建格式如 `*.test.[jt]s?(x)` 的测试用例。
 
 ```tsx
 // header.test.tsx
