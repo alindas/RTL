@@ -205,6 +205,8 @@ fireEvent(node: HTMLElement, event: Event)
 
 ### 常用断言
 
+RTL 扩展了 jest 的 api，定义了自己的断言函数，所有的断言函数包含在`@testing-library/jest-dom`包中。详见：[内置断言库](https://github.com/testing-library/jest-dom)
+
 ```
 toBeDisabled
 toBeEnabled
@@ -476,8 +478,13 @@ describe(describe, () => {
   test('test2', fn);
   test.only('test3', fn); // 再次运行测试，便只会对该单列进行测试
 })
+```
 
+> 当需要在终端查看查找到的 Dom 元素时，使用 prettyDOM 对元素进行包括，便可浏览贴近 HTML 结构的结果
 
+```js
+const div = container.querySelector('div');
+console.log(prettyDOM(div));
 ```
 
 
@@ -720,6 +727,47 @@ await waitFor(() => expect(mockAPI).toHaveBeenCalledTimes(1))
 waitForElementToBeRemoved(document.querySelector('div.getOuttaHere')).then(() =>
   console.log('Element no longer in DOM'),
 )
+```
+
+#### Rudux 测试
+
+对于特别复杂的 `redux`，可以选择对其 `reducer` 和 `effect` 使用基本的单元测试。更多场景下，对 `redux connect` 的组件使用 `集成测试` 。
+
+ 另一说法是，单独导入未进行 `connect` 连接的组件，使用 `Mock` 方法模拟其 `dispatch`测试响应性。 
+
+[官网案例](https://redux.js.org/usage/writing-tests#connected-components)
+
+[测试 Redux 连接的组件](https://hackernoon.com/unit-testing-redux-connected-components-692fa3c4441c)
+
+```js
+// 建立带有 redux 测试的自定义 render, 后续测试集成组件便可以使用该自定义 render
+// test-utils.jsx
+import React from 'react'
+import { render as rtlRender } from '@testing-library/react'
+import { createStore } from 'redux'
+import { Provider } from 'react-redux'
+// Import your own reducer
+import reducer from '../reducer'
+
+function render(
+  ui,
+  {
+    initialState,
+    store = createStore(reducer, initialState),
+    ...renderOptions
+  } = {}
+) {
+  function Wrapper({ children }) {
+    return <Provider store={store}>{children}</Provider>
+  }
+  return rtlRender(ui, { wrapper: Wrapper, ...renderOptions })
+}
+
+// re-export everything
+export * from '@testing-library/react'
+// override render method
+export { render }
+
 ```
 
 
