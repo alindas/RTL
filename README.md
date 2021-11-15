@@ -116,6 +116,8 @@ Testing Library 鼓励测试避免 **实现细节**（比如组件的内部状�
 | findAllBy...  | 报错   | 返回数组 | 返回数组 | yes             |
 
 > 通常来说，getBy 用于查询正常存在的元素（找不到报错），queryBy 用于查询希望不存在的元素（找不到不报错），findBy 则用于查询需要等待的异步元素。
+>
+> 使用 *ByRole 会将隐藏元素名称读取为 ""。可考虑更好另一种查询方法，如仍需使用 *ByRole 进行查询可参考[官方手册](https://testing-library.com/docs/queries/byrole/#hidden)。	[问题详情](https://github.com/testing-library/dom-testing-library/issues/846)  
 
 
 
@@ -480,7 +482,7 @@ describe(describe, () => {
 })
 ```
 
-> 当需要在终端查看查找到的 Dom 元素时，使用 prettyDOM 对元素进行包括，便可浏览贴近 HTML 结构的结果
+> 当需要在终端查看查找到的 Dom 元素时，使用 prettyDOM 对元素进行包括，便可浏览贴近 HTML 结构的结果，当传递 null 时，prettyDOM 返回整个文档的渲染结果。
 
 ```js
 const div = container.querySelector('div');
@@ -731,9 +733,9 @@ waitForElementToBeRemoved(document.querySelector('div.getOuttaHere')).then(() =>
 
 #### Rudux 测试
 
-对于特别复杂的 `redux`，可以选择对其 `reducer` 和 `effect` 使用基本的单元测试。更多场景下，对 `redux connect` 的组件使用 `集成测试` 。
+对于特别复杂的 `redux`，可以选择对其 `reducer` 和 `effect` 使用基本的单元测试。更多场景下，对 `redux connect` 的组件使用 `集成测试` 。可以显式传递 `mock store` ，也可以使用  `Redux Provider` 包裹组件。
 
- 另一说法是，单独导入未进行 `connect` 连接的组件，使用 `Mock` 方法模拟其 `dispatch`测试响应性。 
+ 另一测试方案是单独测试 `redux` 和组件，单独导入未进行 `connect` 连接的组件，使用 `Mock` 方法模拟其 `dispatch`测试响应性。 
 
 [官网案例](https://redux.js.org/usage/writing-tests#connected-components)
 
@@ -769,6 +771,18 @@ export * from '@testing-library/react'
 export { render }
 
 ```
+
+
+
+## 问题收集
+
++ 测试时提示：formatMessage not initialized yet, you should use it after react app mounted #2156
+
+  [参考资料一](https://testing-library.com/docs/example-react-intl/)
+
+  [参考资料二](https://github.com/umijs/umi/issues/2156)
+
++ 
 
 
 
