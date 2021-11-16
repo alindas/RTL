@@ -212,7 +212,6 @@ RTL 扩展了 jest 的 api，定义了自己的断言函数，所有的断言函
 ```
 toBeDisabled
 toBeEnabled
-toBeEmpty
 toBeEmptyDOMElement
 toBeInTheDocument
 toBeInvalid
@@ -306,13 +305,49 @@ toHaveDescription
 
 ### Mock 函数
 
-顾名思义，用来生成一个测试用的函数。
+Jest 的三个常用 Mock 函数 API 是 `jest.fn()`，`jest.spyOn()`，`jest.mock()`。
+
+在单元测试中，更多时候并不需要关心内部调用方法的执行过程和结果，只需要确认是否被正确调用即可。
+
+Mock 函数提供三种特性：
+
++ 捕获函数调用情况
++ 设置函数返回值
++ 改变函数内部实现
+
+**一、Jest.fn()**
+
+默认返回 `undefined` 作为返回值。
 
 ```js
-const test_click = jest.fn();
+const test_click = jest.fn(1,2,3);
 
 expect(test_click).toHaveBeenCalledTimes(1) // 测试是否调用了 1 次
+expect(test_click).toHaveBeenCalledWith(1,2,3) // 测试是否调用了 1 次
 ```
+
+也可以自定义返回值，内部实现
+
+```
+// 自定义返回值
+let customFn = jest.fn().mockReturnValue('default');
+expect(customFn()).toBe('default');
+
+// 自定义内部实现
+let customInside = jest.fn((num1, num2) => num1 + num2);
+expect(customInside(10, 10)).toBe(20);
+
+// 返回 Promise
+test('jest 返回 Promise', async() => {
+    let mockFn = jest.fn().mockResolveValue('promise');
+    let result = await mockFn();
+    expect(result).toBe('promise');
+    expect(Object.prototype.toString.call(mockFn())).toBe('[object Promise]')
+})
+
+```
+
+
 
 ### 分组和钩子
 
@@ -397,6 +432,64 @@ inside afterAll
 outside afterAll
 **/
 ```
+
+### 测试异步模块
+
+在包括测试的函数里传入 **done** 参数，Jest 会等 done 回调函数执行结束后结束测试。若 done 从未被调用，则测试用例执行失败，同时输出超时错误。
+
+```js
+import timeout from './timeout'
+
+test('测试timer', (done) => {
+    timeout(() => {
+        expect(2+2).toBe(4)
+        done()
+    })
+})
+```
+
+如果异步函数返回 Promise，则可以直接将这个 Promise 返回，Jest 会等待这个 Promise 的 resolve 状态。如果期待 Promise 被 Reject，则需要使用`.catch`方法，并添加`expect.assertions`来验证一定数量的断言被调用。
+
+```js
+test('the data is peanut butter', () => {
+  return fetchData().then(data => {
+    expect(data).toBe('peanut butter');
+  });
+});
+
+test('the fetch fails with an error', () => {
+  expect.assertions(1);
+  return fetchData().catch(e => expect(e).toMatch('error'));
+});
+
+test('the data is peanut butter', () => {
+  return expect(fetchData()).resolves.toBe('peanut butter');
+});
+
+test('the fetch fails with an error', () => {
+  return expect(fetchData()).rejects.toMatch('error');
+});
+```
+
+借助 async / await 
+
+```js
+test('the data is peanut butter', async () => {
+  const data = await fetchData();
+  expect(data).toBe('peanut butter');
+});
+
+test('the fetch fails with an error', async () => {
+  expect.assertions(1);
+  try {
+    await fetchData();
+  } catch (e) {
+    expect(e).toMatch('error');
+  }
+});
+```
+
+在测试 `React` 组件时，经常能碰到在 `useEffect` 中更新 State 或异步更新 State 的场景，这时测试断言的处理需要借助 `Act` API 。[案例说明和使用方法](https://github.com/threepointone/react-act-examples/blob/master/sync.md)
 
 
 
@@ -776,13 +869,13 @@ export { render }
 
 ## 问题收集
 
-+ 测试时提示：formatMessage not initialized yet, you should use it after react app mounted #2156
++ formatMessage not initialized yet, you should use it after react app mounted #2156.
 
   [参考资料一](https://testing-library.com/docs/example-react-intl/)
 
   [参考资料二](https://github.com/umijs/umi/issues/2156)
 
-+ 
++ Could not find required `intl` object. <IntlProvider> needs to exist in the component ancestry. Using default message as fallback
 
 
 
